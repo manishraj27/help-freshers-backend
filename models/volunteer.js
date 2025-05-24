@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 
 const volunteerSchema = new mongoose.Schema({
   // Personal Information
@@ -84,8 +85,37 @@ const volunteerSchema = new mongoose.Schema({
   updatedAt: {
     type: Date,
     default: Date.now
+  },
+  password: {
+    type: String,
+    select: false
+  },
+  passwordResetToken: {
+    type: String,
+    select: false
+  },
+  passwordResetExpires: {
+    type: Date,
+    select: false
+  },
+  isPasswordSet: {
+    type: Boolean,
+    default: false
   }
 });
+
+// Hash password before saving
+volunteerSchema.pre('save', async function(next) {
+  if (this.isModified('password')) {
+    this.password = await bcrypt.hash(this.password, 10);
+  }
+  next();
+});
+
+// Method to compare password
+volunteerSchema.methods.comparePassword = async function(candidatePassword) {
+  return await bcrypt.compare(candidatePassword, this.password);
+};
 
 // Update the updatedAt timestamp before saving
 volunteerSchema.pre('save', function(next) {
