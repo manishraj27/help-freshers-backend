@@ -65,3 +65,43 @@ exports.sendStatusUpdateEmail = async (email, status) => {
 
   await transporter.sendMail(mailOptions);
 };
+
+exports.sendSessionRequestEmail = async (email, session) => {
+  const mailOptions = createMailOptions(
+    email,
+    'New Session Request',
+    `
+    <h2>New Session Request</h2>
+    <p>You have a new session request from ${session.user.name}</p>
+    <p>Details:</p>
+    <ul>
+      <li>Date: ${new Date(session.scheduledFor).toLocaleString()}</li>
+      <li>Topic: ${session.topic}</li>
+      <li>Duration: ${session.duration} minutes</li>
+    </ul>
+    <p>Please log in to accept or reject this request.</p>
+    `
+  );
+
+  await transporter.sendMail(mailOptions);
+};
+
+exports.sendSessionConfirmationEmail = async (email, session) => {
+  const mailOptions = createMailOptions(
+    email,
+    'Session Confirmed',
+    `
+    <h2>Session Confirmed</h2>
+    <p>Your session has been confirmed!</p>
+    <p>Details:</p>
+    <ul>
+      <li>Date: ${new Date(session.scheduledFor).toLocaleString()}</li>
+      <li>Topic: ${session.topic}</li>
+      <li>Duration: ${session.duration} minutes</li>
+      <li>Meet Link: <a href="${session.meetLink}">${session.meetLink}</a></li>
+    </ul>
+    `
+  );
+
+  await transporter.sendMail(mailOptions);
+};

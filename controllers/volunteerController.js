@@ -123,3 +123,24 @@ exports.getAllVolunteers = async (req, res) => {
     });
   }
 };
+
+// Add this to the existing controller
+exports.getApprovedVolunteers = async (req, res) => {
+  try {
+    const volunteers = await Volunteer.find({ 
+      status: 'approved',
+      isPasswordSet: true
+    }).select('firstName lastName profession organization areasOfExpertise');
+
+    res.json({
+      success: true,
+      data: volunteers
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching volunteers',
+      error: error.message
+    });
+  }
+};
