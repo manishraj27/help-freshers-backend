@@ -47,11 +47,19 @@ exports.updateSessionStatus = async (req, res) => {
     const { sessionId } = req.params;
     const { status, meetLink } = req.body;
 
-    const session = await Session.findById(sessionId).populate('volunteer');
+    const session = await Session.findById(sessionId).populate('volunteer', 'firstName lastName email profession');
     if (!session) {
       return res.status(404).json({
         success: false,
         message: 'Session not found'
+      });
+    }
+
+    // Check if requesting volunteer owns this session
+    if (session.volunteer._id.toString() !== req.volunteer._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'You are not authorized to update this session'
       });
     }
 
@@ -65,10 +73,30 @@ exports.updateSessionStatus = async (req, res) => {
 
     await session.save();
 
+    // Create a clean response object with only necessary data
+    const responseData = {
+      _id: session._id,
+      status: session.status,
+      scheduledFor: session.scheduledFor,
+      topic: session.topic,
+      meetLink: session.meetLink,
+      user: {
+        name: session.user.name,
+        email: session.user.email
+      },
+      volunteer: {
+        firstName: session.volunteer.firstName,
+        lastName: session.volunteer.lastName,
+        profession: session.volunteer.profession
+      },
+      createdAt: session.createdAt,
+      updatedAt: session.updatedAt
+    };
+
     res.json({
       success: true,
       message: 'Session status updated successfully',
-      data: session
+      data: responseData
     });
   } catch (error) {
     res.status(500).json({
@@ -82,7 +110,9 @@ exports.updateSessionStatus = async (req, res) => {
 // Get volunteer's sessions
 exports.getVolunteerSessions = async (req, res) => {
   try {
-    const { volunteerId } = req.params;
+    // Use the volunteer ID from the authenticated user in middleware
+    const volunteerId = req.volunteer._id;
+    
     const sessions = await Session.find({ volunteer: volunteerId })
       .sort({ scheduledFor: 'asc' });
 
